@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>企业裁员监测与员工权益保护</title>
+<style>
+  :root { --bg:#f5f7fa; --card:#fff; --primary:#1976D2; --accent:#FF9800; --danger:#f44336; --text:#333; --muted:#666; --line:#e0e0e0; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:var(--bg); color:var(--text); line-height:1.6; }
+  .container { max-width:1100px; margin:0 auto; padding:20px; }
+  header { background:linear-gradient(135deg,#1976D2,#42A5F5); color:#fff; padding:30px 20px; border-radius:12px; margin-bottom:20px; }
+  header h1 { font-size:24px; margin-bottom:8px; }
+  header p { opacity:.9; font-size:14px; }
+  .tabs { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
+  .tab { padding:10px 20px; border:none; border-radius:8px; cursor:pointer; background:var(--card); color:var(--text); font-size:14px; transition:.2s; }
+  .tab.active { background:var(--primary); color:#fff; }
+  .panel { display:none; }
+  .panel.active { display:block; }
+  .card { background:var(--card); border-radius:12px; padding:20px; margin-bottom:16px; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+  .card h2 { font-size:18px; margin-bottom:12px; color:var(--primary); }
+  .card h3 { font-size:15px; margin:12px 0 6px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px; }
+  .item-card { border:1px solid var(--line); border-radius:10px; padding:16px; background:#fafafa; }
+  .item-card .name { font-weight:700; font-size:16px; margin-bottom:4px; }
+  .item-card .meta { font-size:12px; color:var(--muted); margin-bottom:8px; }
+  .badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; margin-right:4px; }
+  .badge.high { background:#ffebee; color:var(--danger); }
+  .badge.mid { background:#fff3e0; color:var(--accent); }
+  .badge.low { background:#e8f5e9; color:#2e7d32; }
+  .badge.status { background:#e3f2fd; color:#1976d2; }
+  .search-bar { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  .search-bar input, .search-bar select { padding:10px; border:1px solid var(--line); border-radius:8px; font-size:14px; }
+  .search-bar input { flex:1; min-width:200px; }
+  .btn { padding:10px 20px; border:none; border-radius:8px; cursor:pointer; font-size:14px; transition:.2s; }
+  .btn-primary { background:var(--primary); color:#fff; }
+  .btn-primary:hover { background:#1565c0; }
+  .btn-secondary { background:#e0e0e0; color:var(--text); }
+  .form-group { margin-bottom:12px; }
+  .form-group label { display:block; font-size:13px; color:var(--muted); margin-bottom:4px; }
+  .form-group input, .form-group select, .form-group textarea { width:100%; padding:10px; border:1px solid var(--line); border-radius:8px; font-size:14px; }
+  .result-box { background:#e3f2fd; border-left:4px solid var(--primary); padding:16px; border-radius:8px; margin-top:12px; }
+  .result-box h3 { color:var(--primary); }
+  .calc-result { font-size:28px; font-weight:700; margin:8px 0; color:var(--primary); }
+  .record-item { border-bottom:1px solid var(--line); padding:12px 0; }
+  .record-item:last-child { border-bottom:none; }
+  .record-item .title { font-weight:600; }
+  .record-item .meta { font-size:12px; color:var(--muted); }
+  .empty { text-align:center; color:var(--muted); padding:40px; }
+  .footer { text-align:center; color:var(--muted); font-size:12px; margin-top:30px; padding:20px; }
+  .job-card { border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:12px; }
+  .job-card .title { font-weight:700; font-size:16px; margin-bottom:4px; }
+  .job-card .meta { font-size:12px; color:var(--muted); margin-bottom:8px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>📊 企业裁员监测与员工权益保护</h1>
+    <p>裁员信息追踪 · 经济补偿计算器 · 员工权益知识库 · 求职市场 — 帮助职场人应对裁员风险</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('layoffs')">裁员监测</button>
+    <button class="tab" onclick="showTab('calc')">补偿计算器</button>
+    <button class="tab" onclick="showTab('knowledge')">权益知识库</button>
+    <button class="tab" onclick="showTab('jobs')">求职市场</button>
+    <button class="tab" onclick="showTab('records')">我的记录</button>
+  </div>
+
+  <!-- 裁员监测 -->
+  <div id="layoffs" class="panel active">
+    <div class="card">
+      <h2>裁员信息监测</h2>
+      <div class="search-bar">
+        <input type="text" id="layoffSearch" placeholder="搜索公司/部门/原因..." oninput="loadLayoffs()">
+        <select id="companyFilter" onchange="loadLayoffs()">
+          <option value="">全部公司</option>
+        </select>
+      </div>
+      <div id="layoffList" class="grid"></div>
+    </div>
+  </div>
+
+  <!-- 补偿计算器 -->
+  <div id="calc" class="panel">
+    <div class="card">
+      <h2>经济补偿金计算器（N+1）</h2>
+      <div class="form-group">
+        <label>工作年限（年）</label>
+        <input type="number" id="years" value="3" min="0">
+      </div>
+      <div class="form-group">
+        <label>额外月份（月）</label>
+        <input type="number" id="months" value="0" min="0" max="11">
+      </div>
+      <div class="form-group">
+        <label>月平均工资（元）</label>
+        <input type="number" id="salary" value="20000" min="0">
+      </div>
+      <div class="form-group">
+        <label>当地社平工资（元）</label>
+        <input type="number" id="avgSalary" value="10000" min="0">
+      </div>
+      <div class="form-group">
+        <label><input type="checkbox" id="cap" checked> 应用法定上限（3倍社平、12年）</label>
+      </div>
+      <button class="btn btn-primary" onclick="doCalc()">计算补偿金</button>
+      <div id="calcResult"></div>
+    </div>
+  </div>
+
+  <!-- 权益知识库 -->
+  <div id="knowledge" class="panel">
+    <div class="card">
+      <h2>员工权益知识库</h2>
+      <div class="search-bar">
+        <input type="text" id="knowSearch" placeholder="搜索权益知识..." oninput="loadKnowledge()">
+        <select id="tagFilter" onchange="loadKnowledge()">
+          <option value="">全部标签</option>
+        </select>
+      </div>
+      <div id="knowList"></div>
+    </div>
+  </div>
+
+  <!-- 求职市场 -->
+  <div id="jobs" class="panel">
+    <div class="card">
+      <h2>求职市场</h2>
+      <div class="search-bar">
+        <input type="text" id="jobSearch" placeholder="搜索职位/公司/技能..." oninput="loadJobs()">
+      </div>
+      <div id="jobList"></div>
+    </div>
+  </div>
+
+  <!-- 我的记录 -->
+  <div id="records" class="panel">
+    <div class="card">
+      <h2>我的记录</h2>
+      <div class="form-group">
+        <label>公司名称</label>
+        <input type="text" id="recCompany" placeholder="如：腾讯">
+      </div>
+      <div class="form-group">
+        <label>部门</label>
+        <input type="text" id="recDept" placeholder="如：云业务">
+      </div>
+      <div class="form-group">
+        <label>日期</label>
+        <input type="text" id="recDate" placeholder="如：2026-11">
+      </div>
+      <div class="form-group">
+        <label>状态</label>
+        <select id="recStatus">
+          <option value="传言">传言</option>
+          <option value="确认">确认</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>备注</label>
+        <textarea id="recNotes" rows="2" placeholder="记录具体情况..."></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="addRecord()">添加记录</button>
+      <div id="recordList" style="margin-top:20px;"></div>
+    </div>
+  </div>
+
+  <div class="footer">Layoff Monitor MVP · 基于 X 热搜话题 #1 开发 · DevBot</div>
+</div>
+
+<script>
+function showTab(id) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById(id).classList.add('active');
+  if (id === 'layoffs') loadLayoffs();
+  if (id === 'knowledge') loadKnowledge();
+  if (id === 'jobs') loadJobs();
+  if (id === 'records') loadRecords();
+}
+
+async function loadLayoffs() {
+  const q = document.getElementById('layoffSearch').value;
+  const company = document.getElementById('companyFilter').value;
+  const params = new URLSearchParams();
+  if (q) params.set('q', q);
+  if (company) params.set('company', company);
+  const res = await fetch('/api/layoffs?' + params);
+  const data = await res.json();
+  // populate company filter
+  const sel = document.getElementById('companyFilter');
+  if (sel.options.length <= 1) {
+    const companies = [...new Set(data.map(d=>d.company))];
+    companies.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; sel.appendChild(o); });
+  }
+  const el = document.getElementById('layoffList');
+  if (!data.length) { el.innerHTML = '<div class="empty">未找到匹配的裁员信息</div>'; return; }
+  el.innerHTML = data.map(l => `
+    <div class="item-card">
+      <div class="name">${l.company}</div>
+      <div class="meta">
+        <span class="badge status">${l.status}</span>
+        <span class="badge ${l.scale.includes('15')||l.scale.includes('12')?'high':l.scale.includes('10')?'mid':'low'}">${l.scale}</span>
+      </div>
+      <div style="font-size:13px;margin-bottom:4px;"><strong>部门：</strong>${l.department}</div>
+      <div style="font-size:13px;margin-bottom:4px;"><strong>原因：</strong>${l.reason}</div>
+      <div style="font-size:12px;color:var(--muted);">时间：${l.date} · 来源：${l.source}</div>
+    </div>
+  `).join('');
+}
+
+async function doCalc() {
+  const years = parseInt(document.getElementById('years').value) || 0;
+  const months = parseInt(document.getElementById('months').value) || 0;
+  const salary = parseFloat(document.getElementById('salary').value) || 0;
+  const avgSalary = parseFloat(document.getElementById('avgSalary').value) || 10000;
+  const cap = document.getElementById('cap').checked;
+  const res = await fetch('/api/calc', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({years,months,monthlySalary:salary,localAvg:avgSalary,cap}) });
+  const d = await res.json();
+  document.getElementById('calcResult').innerHTML = `
+    <div class="result-box">
+      <h3>计算结果</h3>
+      <div class="calc-result">¥${d.compensation.toLocaleString()}</div>
+      <p><strong>补偿年限 N：</strong>${d.n} 年</p>
+      <p><strong>月平均工资：</strong>¥${d.monthlySalary.toLocaleString()}</p>
+      <p style="font-size:12px;color:var(--muted);">${d.note}</p>
+    </div>
+  `;
+}
+
+async function loadKnowledge() {
+  const q = document.getElementById('knowSearch').value;
+  const tag = document.getElementById('tagFilter').value;
+  const params = new URLSearchParams();
+  if (q) params.set('q', q);
+  if (tag) params.set('tag', tag);
+  const res = await fetch('/api/knowledge?' + params);
+  const data = await res.json();
+  const sel = document.getElementById('tagFilter');
+  if (sel.options.length <= 1) {
+    const tags = await (await fetch('/api/knowledge/tags')).json();
+    tags.forEach(t => { const o = document.createElement('option'); o.value = t; o.textContent = t; sel.appendChild(o); });
+  }
+  const el = document.getElementById('knowList');
+  if (!data.length) { el.innerHTML = '<div class="empty">未找到相关知识</div>'; return; }
+  el.innerHTML = data.map(k => `
+    <div class="item-card" style="margin-bottom:12px;">
+      <div class="name">${k.title}</div>
+      <div class="meta">${k.tags.map(t=>'<span class="badge status">'+t+'</span>').join('')}</div>
+      <div style="font-size:13px;margin-top:8px;">${k.content}</div>
+    </div>
+  `).join('');
+}
+
+async function loadJobs() {
+  const q = document.getElementById('jobSearch').value;
+  const params = q ? '?q=' + encodeURIComponent(q) : '';
+  const res = await fetch('/api/jobs' + params);
+  const data = await res.json();
+  const el = document.getElementById('jobList');
+  if (!data.length) { el.innerHTML = '<div class="empty">暂无职位</div>'; return; }
+  el.innerHTML = data.map(j => `
+    <div class="job-card">
+      <div class="title">${j.title}</div>
+      <div class="meta">${j.company} · ${j.location} · ${j.salary}</div>
+      <div>${j.tags.map(t=>'<span class="badge status">'+t+'</span>').join('')}</div>
+    </div>
+  `).join('');
+}
+
+async function addRecord() {
+  const company = document.getElementById('recCompany').value;
+  const department = document.getElementById('recDept').value;
+  const date = document.getElementById('recDate').value;
+  const status = document.getElementById('recStatus').value;
+  const notes = document.getElementById('recNotes').value;
+  await fetch('/api/records', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({company,department,date,status,notes}) });
+  document.getElementById('recCompany').value = '';
+  document.getElementById('recDept').value = '';
+  document.getElementById('recDate').value = '';
+  document.getElementById('recNotes').value = '';
+  loadRecords();
+}
+
+async function loadRecords() {
+  const res = await fetch('/api/records');
+  const data = await res.json();
+  const el = document.getElementById('recordList');
+  if (!data.length) { el.innerHTML = '<div class="empty">暂无记录</div>'; return; }
+  el.innerHTML = data.map(r => `
+    <div class="record-item">
+      <div class="title">${r.company || '未命名'} (${r.department || '-'})</div>
+      <div class="meta">${r.date || '-'} · ${r.status || '-'} · ${new Date(r.ts).toLocaleString()}</div>
+      <div style="font-size:12px;color:var(--muted);">${r.notes||'无备注'}</div>
+    </div>
+  `).join('');
+}
+
+loadLayoffs();
+</script>
+</body>
+</html>

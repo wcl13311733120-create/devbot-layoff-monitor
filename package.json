@@ -1,0 +1,12 @@
+{
+  "name": "layoff-monitor",
+  "version": "1.0.0",
+  "description": "企业裁员监测与员工权益保护平台 MVP — 裁员信息追踪、补偿计算器、权益知识库、求职市场",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.22.3"
+  }
+}
